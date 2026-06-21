@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kavishe — Msaidizi Mahiri wa Myco</title>
+    <!-- Tailwind CSS kwa ajili ya muundo wa kitaalamu na wa kisasa -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome kwa ajili ya Icons za kitaalamu -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0b0f19;
+            color: #f3f4f6;
+        }
+        /* Mtindo wa kisasa wa giza */
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .neon-accent {
+            color: #00f2fe;
+            text-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+        }
+        .neon-bg {
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #374151;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-10">
+
+    <div class="max-w-6xl mx-auto px-4 pt-6">
+        <!-- HEADER YA KAVISHE -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 pb-6 border-b border-gray-800 gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 rounded-2xl neon-bg flex items-center justify-center text-white text-3xl shadow-lg shadow-cyan-500/20">
+                    <i class="fa-solid fa-robot animate-pulse"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold tracking-tight text-white">KAVISHE <span class="text-xs font-semibold px-2.5 py-0.5 rounded neon-bg text-black ml-2">V2.0 PRO</span></h1>
+                    <p class="text-gray-400 text-sm flex items-center gap-1">
+                        <i class="fa-solid fa-user-tie text-cyan-400"></i> Msaidizi rasmi na mahiri wa <strong class="text-white">Myco</strong>
+                    </p>
+                </div>
+            </div>
+            <!-- SEHEMU YA API KEY YA JUU -->
+            <div class="w-full md:w-auto glass-panel p-3 rounded-xl flex items-center gap-2">
+                <i class="fa-solid fa-key text-yellow-500"></i>
+                <input type="password" id="apiKeyInput" placeholder="Weka Gemini API Key hapa..." class="bg-transparent border-none text-sm text-gray-200 focus:outline-none focus:ring-0 w-48 md:w-64" onchange="saveApiKey()">
+                <button onclick="saveApiKey()" class="text-xs px-3 py-1.5 neon-bg text-black rounded-lg font-bold hover:opacity-90 transition">Hifadhi</button>
+            </div>
+        </header>
+
+        <!-- DASHBOARD NAVIGATION TABS -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
+            <button onclick="switchTab('contactsTab')" id="btn-contactsTab" class="tab-btn p-3 rounded-xl text-center font-semibold text-sm transition glass-panel text-cyan-400 border-cyan-500/30 border">
+                <i class="fa-solid fa-address-book block text-lg mb-1"></i> Kitabu cha Simu
+            </button>
+            <button onclick="switchTab('chatTab')" id="btn-chatTab" class="tab-btn p-3 rounded-xl text-center font-semibold text-sm transition glass-panel text-gray-400">
+                <i class="fa-solid fa-comment-dots block text-lg mb-1"></i> Soga na Kavishe
+            </button>
+            <button onclick="switchTab('logsTab')" id="btn-logsTab" class="tab-btn p-3 rounded-xl text-center font-semibold text-sm transition glass-panel text-gray-400">
+                <i class="fa-solid fa-clock-rotate-left block text-lg mb-1"></i> Rekodi & Kumbukumbu
+            </button>
+            <button onclick="switchTab('deletedTab')" id="btn-deletedTab" class="tab-btn p-3 rounded-xl text-center font-semibold text-sm transition glass-panel text-gray-400">
+                <i class="fa-solid fa-trash-can block text-lg mb-1"></i> Jalada la Vilivyofutwa
+            </button>
+        </div>
+
+        <!-- YALIYOMO KWENYE TABS -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- UPANDE WA KUSHOTO: KUWEKA CONTACT/LOGS HARAKA -->
+            <div class="lg:col-span-1 space-y-6">
+                
+                <!-- FOMU YA CONTACT MPYA -->
+                <div class="glass-panel p-5 rounded-2xl shadow-xl">
+                    <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-user-plus text-cyan-400"></i> Sajili Namba Mpya
+                    </h2>
+
+                    <!-- KUBADILISHA MFUMO WA KUINGIZA (SINGLE VS BULK) -->
+                    <div class="flex gap-2 mb-4 bg-gray-950/80 p-1 rounded-xl border border-gray-800">
+                        <button onclick="toggleRegisterMode('single')" id="reg-single-btn" class="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition bg-cyan-950 text-cyan-400">
+                            <i class="fa-solid fa-user mr-1"></i> Mmoja Mmoja
+                        </button>
+                        <button onclick="toggleRegisterMode('bulk')" id="reg-bulk-btn" class="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition text-gray-400">
+                            <i class="fa-solid fa-users mr-1"></i> Paste kwa Wingi
+                        </button>
+                    </div>
+
+                    <!-- KUINGIZA MMOJA MMOJA -->
+                    <div id="singleRegisterForm" class="space-y-3">
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-1">Jina Kamili</label>
+                            <input type="text" id="cName" placeholder="Mfano: Myco" class="w-full bg-gray-900/50 border border-gray-800 rounded-lg p-3 text-sm focus:outline-none focus:border-cyan-500 text-white">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-1">Namba ya Simu</label>
+                            <input type="tel" id="cPhone" placeholder="Mfano: 0753232521" class="w-full bg-gray-900/50 border border-gray-800 rounded-lg p-3 text-sm focus:outline-none focus:border-cyan-500 text-white">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-1">Maelezo/Wasifu</label>
+                            <textarea id="cDetails" placeholder="Mfano: Rafiki wa karibu, mfanyabiashara wa duka " class="w-full bg-gray-900/50 border border-gray-800 rounded-lg p-3 text-sm focus:outline-none focus:border-cyan-500 text-white h-20"></textarea>
+                        </div>
+                        <button onclick="saveContact()" class="w-full neon-bg text-black font-bold p-3 rounded-lg text-sm transition hover:scale-[1.02] active:scale-[0.98]">
+                            <i class="fa-solid fa-save mr-1"></i> Hifadhi kwa Kavishe
+                        </button>
+                    </div>
+
+                    <!-- KUINGIZA KWA WINGI (BULK PASTE) -->
+                    <div id="bulkRegisterForm" class="space-y-3 hidden">
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-1">Paste Orodha ya Namba Hapa</label>
+                            <textarea id="bulkContactsInput" placeholder="Tenganisha kwa mkato au kistari.&#10;Mfano:&#10;Myco, 0712345678, Fundi simu&#10;Mama Asha, 0655112233, Jirani Mwenge&#10;John, 0767998877" class="w-full bg-gray-900/50 border border-gray-800 rounded-lg p-3 text-sm focus:outline-none focus:border-cyan-500 text-white h-48 font-mono text-xs leading-relaxed"></textarea>
+                        </div>
+                        <p class="text-[10px] text-gray-400 leading-relaxed">
+                            <i class="fa-solid fa-circle-info text-cyan-400 mr-1"></i> 
+                            Kila mwasiliani awe kwenye mstari wake. Tenganisha kwa: <code>Jina, Namba, Maelezo</code> au <code>Jina - Namba</code>.
+                        </p>
+                        <button onclick="saveBulkContacts()" class="w-full neon-bg text-black font-bold p-3 rounded-lg text-sm transition hover:scale-[1.02] active:scale-[0.98]">
+                            <i class="fa-solid fa-file-import mr-1"></i> Ingiza Namba Zote kwa Mara Moja
+                        </button>
+                    </div>
+                </div>
+
+                <!-- MAELEZO MAFUPI YA KIUFUNDI YA KAVISHE -->
+                <div class="glass-panel p-5 rounded-2xl text-xs text-gray-400 space-y-2">
+                    <h3 class="font-bold text-white text-sm mb-2"><i class="fa-solid fa-circle-info text-cyan-400 mr-1"></i> Jinsi ya Kutumia:</h3>
+                    <p><strong class="text-white">1.</strong> Weka API Key yako ya Google AI Studio juu ili Kavishe amke.</p>
+                    <p><strong class="text-white">2.</strong> Kupiga au kutuma SMS kupitia app hii kutaacha logi inayofundisha akili ya Kavishe.</p>
+                    <p><strong class="text-white">3.</strong> Ukitaka kusoma picha, nenda kwenye tab ya Soga, bofya alama ya picha na utume kwa Kavishe.</p>
+                </div>
+
+            </div>
+
+            <!-- UPANDE WA KULIA: SEHEMU KUU YA YALIYOMO (TABS CONTENT) -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- 1. TAB YA KITABU CHA SIMU (CONTACTS) -->
+                <div id="contactsTab" class="tab-content glass-panel p-6 rounded-2xl min-h-[500px]">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-address-book text-cyan-400"></i> Orodha kuu ya Namba
+                        </h2>
+                        <input type="text" id="searchContacts" oninput="renderContacts()" placeholder="Tafuta jina..." class="bg-gray-900/60 border border-gray-800 text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-cyan-500 text-white">
+                    </div>
+                    <div id="contactList" class="space-y-3 max-h-[450px] overflow-y-auto pr-2">
+                        <!-- Namba zitaingia hapa kwa JS -->
+                    </div>
+                </div>
+
+                <!-- 2. TAB YA SOGA NA AI KAVISHE -->
+                <div id="chatTab" class="tab-content hidden glass-panel p-6 rounded-2xl flex flex-col justify-between min-h-[500px]">
+                    <div>
+                        <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-800">
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></div>
+                                <h2 class="text-lg font-bold text-white">Kavishe (Msaidizi wako)</h2>
+                            </div>
+                            <button onclick="clearChat()" class="text-xs text-red-400 hover:text-red-300 transition">
+                                <i class="fa-solid fa-trash-arrow-up"></i> Futa Mazungumzo
+                            </button>
+                        </div>
+                        
+                        <!-- CHAT WINDOW -->
+                        <div id="chatBox" class="space-y-4 max-h-[320px] overflow-y-auto pr-2 mb-4 p-2 bg-gray-955/50 rounded-lg min-h-[280px]">
+                            <div class="flex gap-3 text-sm">
+                                <div class="w-8 h-8 rounded-full neon-bg flex items-center justify-center text-black font-bold text-xs shrink-0">K</div>
+                                <div class="bg-gray-800/80 p-3 rounded-r-xl rounded-bl-xl text-gray-200">
+                                    Habari Myco! Mimi ni <strong>Kavishe</strong>, msaidizi wako binafsi mwenye akili kubwa ya Gemini. 
+                                    Naelewa data zako zote za sasa na zile ulizowahi kuzifuta kwenye app hii. 
+                                    <br><br>
+                                    Unaweza kuniuliza taarifa za mtu, ushauri wa SMS ulizotumiwa, au unaweza <strong>kupakia picha ya maandishi</strong> hapo chini nami nitakusomea kila kitu!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SEHEMU YA KUTUMA MESSAGE NA PICHA -->
+                    <div class="space-y-3">
+                        <!-- Preview ya picha iliyochaguliwa -->
+                        <div id="imagePreviewContainer" class="hidden flex items-center gap-2 p-2 bg-gray-900 rounded-lg border border-cyan-500/30">
+                            <img id="imagePreview" src="" class="h-14 w-14 object-cover rounded border border-gray-700">
+                            <div class="text-xs text-gray-400 flex-1 overflow-hidden text-ellipsis">Picha imepakiwa tayari kutumwa kwa Kavishe.</div>
+                            <button onclick="cancelImage()" class="text-red-400 hover:text-red-300 p-2"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+
+                        <div class="flex items-end gap-2">
+                            <!-- Kitufe cha Picha -->
+                            <div class="relative shrink-0">
+                                <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="previewImage(event)">
+                                <button onclick="document.getElementById('imageInput').click()" class="w-12 h-12 rounded-xl bg-gray-800 border border-gray-700 hover:bg-gray-700 text-gray-300 flex items-center justify-center transition" title="Pakia Picha">
+                                    <i class="fa-solid fa-image text-lg"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Uwanja wa Chat -->
+                            <div class="flex-1">
+                                <textarea id="aiQuery" placeholder="Andika ujumbe au uliza swali hapa..." class="w-full bg-gray-900/80 border border-gray-700 rounded-xl p-3 text-sm focus:outline-none focus:border-cyan-500 text-white h-12 resize-none" onkeydown="handleEnterKey(event)"></textarea>
+                            </div>
+
+                            <!-- Kitufe cha Tuma -->
+                            <button onclick="askKavishe()" class="w-12 h-12 rounded-xl neon-bg text-black flex items-center justify-center font-bold shrink-0 hover:scale-105 transition">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. TAB YA REKODI ZA SIMU NA SMS (LOGS) -->
+                <div id="logsTab" class="tab-content hidden glass-panel p-6 rounded-2xl min-h-[500px]">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left text-cyan-400"></i> Kumbukumbu za Matukio (Logs)
+                        </h2>
+                        <button onclick="clearAllLogs()" class="text-xs text-red-400 hover:text-red-300 transition">
+                            <i class="fa-solid fa-trash-can mr-1"></i> Futa Logi zote
+                        </button>
+                    </div>
+                    <div id="logList" class="space-y-3 max-h-[420px] overflow-y-auto pr-2">
+                        <!-- Logs zitafika hapa kwa JS -->
+                    </div>
+                </div>
+
+                <!-- 4. TAB YA JALADA LA VILIVYOFUTWA (RECYCLE BIN) -->
+                <div id="deletedTab" class="tab-content hidden glass-panel p-6 rounded-2xl min-h-[500px]">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-red-400 flex items-center gap-2">
+                                <i class="fa-solid fa-trash-can text-red-400"></i> Jalada la Siri la Vilivyofutwa
+                            </h2>
+                            <p class="text-xs text-gray-400">Kavishe anajua data hizi hata zisipoonekana kwenye orodha kuu.</p>
+                        </div>
+                        <button onclick="emptyRecycleBin()" class="text-xs text-red-500 hover:text-red-400 font-bold transition">
+                            <i class="fa-solid fa-fire mr-1"></i> Safisha Kabisa
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Contacts Zilizofutwa -->
+                        <div class="p-4 bg-gray-900/50 rounded-xl border border-gray-800">
+                            <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2 border-b border-gray-800 pb-2">
+                                <i class="fa-solid fa-user-slash text-yellow-500"></i> Contacts Zilizofutwa
+                            </h3>
+                            <div id="deletedContactsList" class="space-y-2 max-h-[300px] overflow-y-auto pr-1"></div>
+                        </div>
+
+                        <!-- Logs Zilizofutwa -->
+                        <div class="p-4 bg-gray-900/50 rounded-xl border border-gray-800">
+                            <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2 border-b border-gray-800 pb-2">
+                                <i class="fa-solid fa-history text-yellow-500"></i> Logs Zilizofutwa
+                            </h3>
+                            <div id="deletedLogsList" class="space-y-2 max-h-[300px] overflow-y-auto pr-1"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION BOX YA KISASA -->
+    <div id="toastNotification" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition duration-300 max-w-sm glass-panel p-4 rounded-xl flex items-center gap-3 border-l-4 border-cyan-500">
+        <div id="toastIcon" class="text-cyan-400 text-lg"><i class="fa-solid fa-circle-check"></i></div>
+        <div id="toastMessage" class="text-sm font-medium text-gray-200">Ujumbe hapa</div>
+    </div>
+
+    <script>
+        // HALI YA DATA (STATE MANAGEMENT)
+        let contacts = JSON.parse(localStorage.getItem('kavishe_contacts')) || [];
+        let logs = JSON.parse(localStorage.getItem('kavishe_logs')) || [];
+        
+        // Hapa ndipo kumbukumbu ya vilivyofutwa inahifadhiwa kwa siri
+        let deletedContacts = JSON.parse(localStorage.getItem('kavishe_deleted_contacts')) || [];
+        let deletedLogs = JSON.parse(localStorage.getItem('kavishe_deleted_logs')) || [];
+        
+        // Historia ya soga ili Kavishe asisahau mazungumzo yaliyopita (Chat History Memory)
+        let chatHistory = JSON.parse(localStorage.getItem('kavishe_chat_history')) || [];
+        
+        let selectedImageBase64 = ""; // Inahifadhi picha ya Base64 kwa ajili ya AI
+
+        // Kupakia API Key wakati App inafunguka
+        document.getElementById('apiKeyInput').value = localStorage.getItem('kavishe_api_key') || '';
+
+        // KUBADILISHA MFUMO WA USUGULIKAJI (SINGLE VS BULK)
+        function toggleRegisterMode(mode) {
+            const singleForm = document.getElementById('singleRegisterForm');
+            const bulkForm = document.getElementById('bulkRegisterForm');
+            const singleBtn = document.getElementById('reg-single-btn');
+            const bulkBtn = document.getElementById('reg-bulk-btn');
+
+            if (mode === 'single') {
+                singleForm.classList.remove('hidden');
+                bulkForm.classList.add('hidden');
+                singleBtn.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition bg-cyan-950 text-cyan-400";
+                bulkBtn.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition text-gray-400";
+            } else {
+                singleForm.classList.add('hidden');
+                bulkForm.classList.remove('hidden');
+                singleBtn.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition text-gray-400";
+                bulkBtn.className = "flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition bg-cyan-950 text-cyan-400";
+            }
+        }
+
+        // JINSI YA KUHIFADHI API KEY YA GEMINI
+        function saveApiKey() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            localStorage.setItem('kavishe_api_key', key);
+            showToast("Ufunguo wa API umehifadhiwa!", "check-circle", "cyan");
+        }
+
+        // KUBADILISHA TABS KWENYE APP
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-cyan-400', 'border-cyan-500/30', 'border');
+                btn.classList.add('text-gray-400');
+            });
+            document.getElementById('btn-' + tabId).classList.add('text-cyan-400', 'border-cyan-500/30', 'border');
+            document.getElementById('btn-' + tabId).classList.remove('text-gray-400');
+        }
+
+        // KUHIFADHI REKODI MPYA YA CONTACT
+        function saveContact() {
+            const name = document.getElementById('cName').value.trim();
+            const phone = document.getElementById('cPhone').value.trim();
+            const details = document.getElementById('cDetails').value.trim();
+
+            if (!name || !phone) {
+                return showToast("Tafadhali jaza Jina na Namba ya Simu!", "exclamation-triangle", "red");
+            }
+
+            contacts.push({ name, phone, details, id: Date.now().toString() });
+            localStorage.setItem('kavishe_contacts', JSON.stringify(contacts));
+            
+            document.getElementById('cName').value = '';
+            document.getElementById('cPhone').value = '';
+            document.getElementById('cDetails').value = '';
+
+            renderContacts();
+            showToast("Mwasiliani mpya amesajiliwa na Kavishe!", "user-check", "cyan");
+        }
+
+        // KUHIFADHI MAWASILIANO NYINGI KWA MKUPUO (BULK IMPORT LOGIC)
+        function saveBulkContacts() {
+            const rawText = document.getElementById('bulkContactsInput').value.trim();
+            if (!rawText) {
+                return showToast("Tafadhali paste orodha ya namba kwanza!", "exclamation-triangle", "red");
+            }
+
+            const lines = rawText.split('\n');
+            let addedCount = 0;
+            let skippedCount = 0;
+
+            lines.forEach((line, index) => {
+                line = line.trim();
+                if (!line) return; // Ruka mistari tupu
+
+                let parts = [];
+                // Tenganisha kwa mkato, kistari cha kuto, au nukta mbili
+                if (line.includes(',')) {
+                    parts = line.split(',');
+                } else if (line.includes('-')) {
+                    parts = line.split('-');
+                } else if (line.includes(':')) {
+                    parts = line.split(':');
+                } else {
+                    // Kama haina alama, chukulia nafasi ya mwisho ndiyo namba
+                    const words = line.split(/\s+/);
+                    if (words.length >= 2) {
+                        const phoneMaybe = words[words.length - 1];
+                        const nameMaybe = words.slice(0, words.length - 1).join(' ');
+                        parts = [nameMaybe, phoneMaybe];
+                    }
+                }
+
+                if (parts.length >= 2) {
+                    const name = parts[0].trim();
+                    const phone = parts[1].trim().replace(/\s+/g, ''); // Ondoa mapengo kwenye namba
+                    const details = parts[2] ? parts.slice(2).join(',').trim() : "Mwasiliani aliyeingizwa kwa wingi.";
+
+                    if (name && phone) {
+                        // Tengeneza ID ya kipekee ili wasilete hitilafu
+                        const uniqueId = (Date.now() + index).toString();
+                        contacts.push({ name, phone, details, id: uniqueId });
+                        addedCount++;
+                    } else {
+                        skippedCount++;
+                    }
+                } else {
+                    skippedCount++;
+                }
+            });
+
+            if (addedCount > 0) {
+                localStorage.setItem('kavishe_contacts', JSON.stringify(contacts));
+                document.getElementById('bulkContactsInput').value = '';
+                renderContacts();
+                
+                let feedbackMessage = `Namba mpya ${addedCount} zimeingizwa kwa mkupuo!`;
+                if (skippedCount > 0) {
+                    feedbackMessage += ` (Mistari ${skippedCount} haikuwa na muundo sahihi na imerukwa)`;
+                }
+                showToast(feedbackMessage, "users-gear", "cyan");
+                
+                // Rudi kwenye mfumo wa mmoja mmoja baada ya kumaliza kupaste
+                setTimeout(() => toggleRegisterMode('single'), 1200);
+            } else {
+                showToast("Hakuna mwasiliani halali aliyepatikana! Angalia mfano wa uandishi vizuri.", "triangle-exclamation", "red");
+            }
+        }
+
+        // KUFUTA CONTACT NA KUIHAMISHIA KWENYE JALADA LA VILIVYOFUTWA (RECYCLE BIN)
+        function deleteContact(id) {
+            const index = contacts.findIndex(c => c.id === id);
+            if (index !== -1) {
+                const deletedItem = contacts[index];
+                deletedItem.deletedAt = new Date().toLocaleString('sw-TZ');
+                
+                // Ongeza kwenye Recycle Bin
+                deletedContacts.push(deletedItem);
+                localStorage.setItem('kavishe_deleted_contacts', JSON.stringify(deletedContacts));
+
+                // Futa kwenye contacts kuu
+                contacts.splice(index, 1);
+                localStorage.setItem('kavishe_contacts', JSON.stringify(contacts));
+                
+                renderContacts();
+                renderDeletedItems();
+                showToast("Namba imehamishwa kwenda kwenye Jalada la Vilivyofutwa!", "trash", "yellow");
+            }
+        }
+
+        // KUONYESHA MAWASILIANO KWENYE TAB YA CONTACTS
+        function renderContacts() {
+            const list = document.getElementById('contactList');
+            const searchVal = document.getElementById('searchContacts').value.toLowerCase();
+            list.innerHTML = '';
+
+            const filtered = contacts.filter(c => c.name.toLowerCase().includes(searchVal) || c.phone.includes(searchVal));
+
+            if (filtered.length === 0) {
+                list.innerHTML = `<p class="text-gray-500 text-sm text-center py-10">Hakuna namba iliyopatikana kwenye Kitabu chako.</p>`;
+                return;
+            }
+
+            filtered.forEach(c => {
+                list.innerHTML += `
+                    <div class="p-4 bg-gray-900/60 rounded-xl border border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 hover:border-cyan-500/30 transition">
+                        <div>
+                            <h4 class="font-bold text-white text-base">${c.name}</h4>
+                            <p class="text-sm text-cyan-400 font-mono flex items-center gap-1 mt-0.5">
+                                <i class="fa-solid fa-phone text-xs"></i> ${c.phone}
+                            </p>
+                            <p class="text-xs text-gray-400 mt-1">${c.details || 'Hapana maelezo ya ziada yaliyowekwa.'}</p>
+                        </div>
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <button onclick="makeAction('${c.name}', '${c.phone}', 'Kupiga Simu')" class="flex-1 md:flex-none text-xs bg-cyan-950 text-cyan-300 hover:bg-cyan-900 px-3 py-2 rounded-lg font-bold transition flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-phone"></i> Piga
+                            </button>
+                            <button onclick="makeAction('${c.name}', '${c.phone}', 'Kutuma SMS')" class="flex-1 md:flex-none text-xs bg-gray-800 text-gray-300 hover:bg-gray-700 px-3 py-2 rounded-lg font-bold transition flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-comment"></i> SMS
+                            </button>
+                            <button onclick="deleteContact('${c.id}')" class="text-xs bg-red-950/40 text-red-400 hover:bg-red-900/40 p-2 rounded-lg transition" title="Futa">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // KUTEKELEZA KUPIGA SIMU/SMS NA KUWEKA LOG KIOTOMATIKI
+        function makeAction(name, phone, type) {
+            const time = new Date().toLocaleString('sw-TZ');
+            const newLog = { id: Date.now().toString(), name, phone, type, time };
+            
+            logs.push(newLog);
+            localStorage.setItem('kavishe_logs', JSON.stringify(logs));
+            renderLogs();
+
+            showToast(`Rekodi ya ${type} imehifadhiwa!`, "history", "cyan");
+
+            // Kufungua Dialer au App ya SMS ya simu
+            setTimeout(() => {
+                if (type === 'Kupiga Simu') {
+                    window.location.href = `tel:${phone}`;
+                } else {
+                    window.location.href = `sms:${phone}`;
+                }
+            }, 800);
+        }
+
+        // KUFUTA LOG MOJA NA KUIWEKA RECYCLE BIN
+        function deleteLog(id) {
+            const index = logs.findIndex(l => l.id === id);
+            if (index !== -1) {
+                const deletedItem = logs[index];
+                deletedItem.deletedAt = new Date().toLocaleString('sw-TZ');
+                
+                deletedLogs.push(deletedItem);
+                localStorage.setItem('kavishe_deleted_logs', JSON.stringify(deletedLogs));
+
+                logs.splice(index, 1);
+                localStorage.setItem('kavishe_logs', JSON.stringify(logs));
+
+                renderLogs();
+                renderDeletedItems();
+                showToast("Log imeondolewa!", "trash", "yellow");
+            }
+        }
+
+        // KUFUTA LOGS ZOTE KWA MARA MOJA
+        function clearAllLogs() {
+            if (logs.length === 0) return;
+            logs.forEach(l => {
+                l.deletedAt = new Date().toLocaleString('sw-TZ');
+                deletedLogs.push(l);
+            });
+            localStorage.setItem('kavishe_deleted_logs', JSON.stringify(deletedLogs));
+            
+            logs = [];
+            localStorage.setItem('kavishe_logs', JSON.stringify(logs));
+            renderLogs();
+            renderDeletedItems();
+            showToast("Log zote zimefutwa!", "trash", "yellow");
+        }
+
+        // RENDER LOGS
+        function renderLogs() {
+            const list = document.getElementById('logList');
+            list.innerHTML = '';
+
+            if (logs.length === 0) {
+                list.innerHTML = `<p class="text-gray-500 text-sm text-center py-10">Hakuna rekodi yoyote ya mawasiliano iliyopo bado.</p>`;
+                return;
+            }
+
+            logs.slice().reverse().forEach(l => {
+                const isCall = l.type === 'Kupiga Simu';
+                list.innerHTML += `
+                    <div class="p-3 bg-gray-900/50 rounded-lg border border-gray-800/80 flex justify-between items-center text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-lg flex items-center justify-center ${isCall ? 'bg-cyan-950 text-cyan-400' : 'bg-purple-950 text-purple-400'}">
+                                <i class="fa-solid ${isCall ? 'fa-phone-volume' : 'fa-message'}"></i>
+                            </span>
+                            <div>
+                                <p class="text-gray-200 font-bold">${l.type} kwenda kwa <strong class="text-white">${l.name}</strong></p>
+                                <p class="text-gray-400 font-mono mt-0.5">${l.phone} | ${l.time}</p>
+                            </div>
+                        </div>
+                        <button onclick="deleteLog('${l.id}')" class="text-gray-500 hover:text-red-400 p-2 transition">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        // RENDER JALADA LA VILIVYOFUTWA (RECYCLE BIN)
+        function renderDeletedItems() {
+            const cList = document.getElementById('deletedContactsList');
+            const lList = document.getElementById('deletedLogsList');
+
+            cList.innerHTML = '';
+            lList.innerHTML = '';
+
+            if (deletedContacts.length === 0) {
+                cList.innerHTML = `<p class="text-gray-600 text-xs text-center py-4">Safi kabisa, hakuna contact iliyofutwa.</p>`;
+            } else {
+                deletedContacts.forEach((c, index) => {
+                    cList.innerHTML += `
+                        <div class="p-2.5 bg-gray-950 rounded-lg text-xs border border-gray-800">
+                            <div class="flex justify-between items-start">
+                                <strong>${c.name}</strong>
+                                <span class="text-[9px] bg-red-950 text-red-400 px-1.5 py-0.5 rounded">Futa: ${c.deletedAt}</span>
+                            </div>
+                            <p class="font-mono text-gray-400 mt-1">${c.phone}</p>
+                        </div>
+                    `;
+                });
+            }
+
+            if (deletedLogs.length === 0) {
+                lList.innerHTML = `<p class="text-gray-600 text-xs text-center py-4">Hakuna kumbukumbu za logs zilizofutwa.</p>`;
+            } else {
+                deletedLogs.forEach((l, index) => {
+                    lList.innerHTML += `
+                        <div class="p-2.5 bg-gray-950 rounded-lg text-xs border border-gray-800">
+                            <div class="flex justify-between items-start">
+                                <span class="text-gray-300 font-semibold">${l.type} - ${l.name}</span>
+                                <span class="text-[9px] bg-red-950 text-red-400 px-1.5 py-0.5 rounded">${l.deletedAt}</span>
+                            </div>
+                            <p class="text-gray-500 font-mono mt-1">${l.phone}</p>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        // KUSAFISHA KABISA RECYCLE BIN
+        function emptyRecycleBin() {
+            if (deletedContacts.length === 0 && deletedLogs.length === 0) return;
+            
+            deletedContacts = [];
+            deletedLogs = [];
+            
+            localStorage.setItem('kavishe_deleted_contacts', JSON.stringify(deletedContacts));
+            localStorage.setItem('kavishe_deleted_logs', JSON.stringify(deletedLogs));
+            
+            renderDeletedItems();
+            showToast("Jalada la siri la vilivyofutwa sasa limesafishwa kabisa!", "fire-extinguisher", "red");
+        }
+
+        // MWANDIKO WA KOMPYUTA (TYPEWRITER EFFECT)
+        function runTypewriter(text, elementId) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = "";
+            let i = 0;
+            const speed = 12; // Kasi ya kujiandika (milli-seconds)
+
+            // Badilisha alama za mistari mipya na markdown ndogo kuwa HTML tags kabla ya kuandika
+            const formattedText = text
+                .replace(/\n/g, "<br>")
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+            // Tutazunguka herufi kwa herufi, lakini tukikuta HTML tags tunaziandika kwa pamoja ili zisiandike vibaya
+            function type() {
+                if (i < formattedText.length) {
+                    if (formattedText.charAt(i) === '<') {
+                        // Tafuta mwisho wa Tag hii ya HTML
+                        let tagEnd = formattedText.indexOf('>', i);
+                        if (tagEnd !== -1) {
+                            element.innerHTML += formattedText.substring(i, tagEnd + 1);
+                            i = tagEnd + 1;
+                        }
+                    } else {
+                        element.innerHTML += formattedText.charAt(i);
+                        i++;
+                    }
+                    setTimeout(type, speed);
+                    
+                    const chatBox = document.getElementById('chatBox');
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+            }
+            type();
+        }
+
+        // KUSHUGHULIKIA KUINGIZA PICHA KWENYE CHAT
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                selectedImageBase64 = e.target.result.split(',')[1]; // Toa data:image/png;base64,
+                document.getElementById('imagePreview').src = e.target.result;
+                document.getElementById('imagePreviewContainer').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // KUFUTA PICHA ILIYOCHAGULIWA
+        function cancelImage() {
+            selectedImageBase64 = "";
+            document.getElementById('imageInput').value = "";
+            document.getElementById('imagePreviewContainer').classList.add('hidden');
+        }
+
+        // KUSHUGHULIKIA ENTO YA KEYBOARD ILI KUTUMA MSG
+        function handleEnterKey(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                askKavishe();
+            }
+        }
+
+        // KUFUTA MAZUNGU_ZO YA SOGA
+        function clearChat() {
+            chatHistory = [];
+            localStorage.setItem('kavishe_chat_history', JSON.stringify(chatHistory));
+            const chatBox = document.getElementById('chatBox');
+            chatBox.innerHTML = `
+                <div class="flex gap-3 text-sm">
+                    <div class="w-8 h-8 rounded-full neon-bg flex items-center justify-center text-black font-bold text-xs shrink-0">K</div>
+                    <div class="bg-gray-800/80 p-3 rounded-r-xl rounded-bl-xl text-gray-200">
+                        Habari Myco! Kumbukumbu za nyuma zimesafishwa. Sasa soga letu lipo safi kabisa. Niambie namba ya nani unaitaka, au tu-paste SMS uombe ushauri. Pia unaweza kupakia picha nikusaidie kuisoma.
+                    </div>
+                </div>
+            `;
+        }
+
+        // KUWASILIANA NA KAVISHE AI (GEMINI 2.5 FLASH MULTIMODAL)
+        async function askKavishe() {
+            const query = document.getElementById('aiQuery').value.trim();
+            const apiKey = localStorage.getItem('kavishe_api_key');
+            const chatBox = document.getElementById('chatBox');
+
+            if (!query && !selectedImageBase64) return;
+            if (!apiKey) {
+                switchTab('contactsTab'); // Rudi juu ili waone kiboksi cha API
+                return showToast("Tafadhali weka Gemini API Key yako kwanza hapo juu ya App!", "exclamation-triangle", "red");
+            }
+
+            // Onyesha swali la Mtumiaji (Myco) kwenye Chat
+            let imageTagInChat = "";
+            if (selectedImageBase64) {
+                imageTagInChat = `<br><img src="${document.getElementById('imagePreview').src}" class="max-h-32 rounded-lg mt-2 border border-gray-700">`;
+            }
+
+            chatBox.innerHTML += `
+                <div class="flex gap-3 text-sm justify-end">
+                    <div class="bg-cyan-950/80 text-cyan-200 p-3 rounded-l-xl rounded-br-xl text-right max-w-[80%]">
+                        <b>Wewe:</b> ${query || "Umetuma picha..."}
+                        ${imageTagInChat}
+                    </div>
+                </div>
+            `;
+            
+            // Safisha sehemu ya kuandika na uvue picha
+            document.getElementById('aiQuery').value = '';
+            const loadingId = "loading_" + Date.now();
+            const aiTextHolderId = "ai_text_" + Date.now();
+            
+            // Onyesha ujumbe wa upakiaji kwa msaidizi Kavishe
+            chatBox.innerHTML += `
+                <div class="flex gap-3 text-sm" id="${loadingId}">
+                    <div class="w-8 h-8 rounded-full neon-bg flex items-center justify-center text-black font-bold text-xs shrink-0">K</div>
+                    <div class="bg-gray-800/80 p-3 rounded-r-xl rounded-bl-xl text-gray-200 flex items-center gap-2">
+                        <i class="fa-solid fa-spinner animate-spin text-cyan-400"></i> Kavishe anatafakari...
+                    </div>
+                </div>
+            `;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Kuhifadhi soga ya sasa kwenye historia
+            chatHistory.push({ role: "user", text: query || "Picha imepakiwa na Myco" });
+
+            // ANDAA SYSTEM INSTRUCTIONS KALI KWA AJILI YA KAVISHE
+            const systemPrompt = `
+            Wewe ni Kavishe, msaidizi mwerevu, makini, na msiri wa Myco. Kazi yako ni kusimamia app hii ya mawasiliano.
+            Unawasiliana na Myco kwa lugha ya Kiswahili ya kirafiki sana lakini yenye heshima kubwa na utaalamu.
+            
+            UNACHOTAKIWA KUJUA KUHUSU DATA ZA APP:
+            1. Unaweza kuona contacts ambazo bado zipo, na contacts ambazo Myco alizifuta siku za nyuma (Recycle Bin).
+            2. Unaweza kuona kumbukumbu za simu zilizopigwa na SMS zilizotumwa, ikiwa ni pamoja na zile zilizofutwa.
+            
+            MUKTADHA WA SASA WA APP:
+            - KITABU CHA SIMU (Contacts zilizo hai): ${JSON.stringify(contacts)}
+            - JALADA LA VILIVYOFUTWA (Contacts ulizozifuta kwa siri): ${JSON.stringify(deletedContacts)}
+            - LOGI YA SASA YA SIMU/SMS: ${JSON.stringify(logs)}
+            - LOGI YA VILIVYOFUTWA: ${JSON.stringify(deletedLogs)}
+            
+            SHERIA ZAKO ZA MAISHA KAMA KAVISHE:
+            - Kama Myco akiuliza namba ya mtu au maelezo yake (Mfano: "Namba ya Myco ni gani?"), mtafutie na mpe jina na namba na maelezo yake yote.
+            - Kama Myco akiuliza kuhusu kitu alichokifuta (Mfano: "Kavishe, kuna namba niliifuta ya nanihii, hebu nikumbushe?"), angalia orodha ya "JALADA LA VILIVYOFUTWA" uliyopewa hapo juu na umtajie kwa adabu ukimwambia, "Myco, ulifuta hii hapa..."
+            - Kama Myco ameweka picha (image) na akakuuliza kuisoma, isome kwa makini sana, andika maandishi yote yaliyopo kwenye picha hiyo na mshauri kulingana na maandishi hayo.
+            - Lugha yako iwe Kiswahili fasaha chenye wepesi na kujieleza vizuri kama msomi wa masuala ya AI.
+            `;
+
+            // ANDAA MIFUMO YA GEMINI API
+            let contentsPayload = [];
+            
+            // Ongeza kumbukumbu ya hivi karibuni ya soga ili kuwe na mwendelezo mzuri wa mazungumzo
+            // Tutaweka mazungumzo 8 ya mwisho ili tusiandike overload kubwa kwenye API
+            const recentChats = chatHistory.slice(-8);
+            
+            // Jenga part ya mwisho ya prompt
+            let userParts = [];
+            
+            // Kama kuna picha, iandaliwe hapa
+            if (selectedImageBase64) {
+                userParts.push({
+                    inlineData: {
+                        mimeType: "image/jpeg",
+                        data: selectedImageBase64
+                    }
+                });
+            }
+            
+            // Ongeza swali lenyewe
+            userParts.push({
+                text: `${systemPrompt}\n\nSwali/Ombi la sasa la Myco: "${query || "Tazama picha hii niliyokupakia"}"`
+            });
+
+            contentsPayload.push({
+                parts: userParts
+            });
+
+            // Futa preview ya picha kujiandaa na ijayo
+            cancelImage();
+
+            try {
+                // Kuita API ya Gemini 2.5 Flash
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: contentsPayload
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates[0].content.parts[0].text) {
+                    const aiReply = data.candidates[0].content.parts[0].text;
+                    
+                    // Futa kile kidude cha Loading
+                    document.getElementById(loadingId).remove();
+
+                    // Ongeza kijisanduku kikuu cha jibu ambalo lita-type kielektroniki
+                    chatBox.innerHTML += `
+                        <div class="flex gap-3 text-sm">
+                            <div class="w-8 h-8 rounded-full neon-bg flex items-center justify-center text-black font-bold text-xs shrink-0">K</div>
+                            <div class="bg-gray-800/80 p-3 rounded-r-xl rounded-bl-xl text-gray-200 max-w-[80%] id="${aiTextHolderId}">
+                                <span id="${aiTextHolderId}"></span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Endesha madoido ya kuandika herufi kwa herufi (Typewriter)
+                    runTypewriter(aiReply, aiTextHolderId);
+                    
+                    // Tunza kwenye Chat History
+                    chatHistory.push({ role: "model", text: aiReply });
+                    localStorage.setItem('kavishe_chat_history', JSON.stringify(chatHistory));
+
+                } else {
+                    throw new Error("Jibu halikupokelewa vizuri");
+                }
+
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                document.getElementById(loadingId).innerHTML = `
+                    <div class="w-8 h-8 rounded-full neon-bg flex items-center justify-center text-black font-bold text-xs shrink-0">K</div>
+                    <div class="bg-red-950/80 p-3 rounded-r-xl rounded-bl-xl text-red-300">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> Hitilafu imetokea Myco. Hakikisha API Key ni sahihi, ufunguo wako una bando la kutosha, na mtandao wako wa intaneti unafanya kazi vizuri!
+                    </div>
+                `;
+            }
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // KISANDUKU CHA TAARIFA KWA JUU YA SCREEN (TOAST NOTIFICATION)
+        function showToast(message, icon, color = "cyan") {
+            const toast = document.getElementById('toastNotification');
+            const tMsg = document.getElementById('toastMessage');
+            const tIcon = document.getElementById('toastIcon');
+
+            tMsg.innerText = message;
+            tIcon.innerHTML = `<i class="fa-solid fa-${icon}"></i>`;
+            
+            // Badilisha rangi ya border kulingana na muktadha
+            toast.className = `fixed bottom-5 right-5 z-50 transform transition duration-300 max-w-sm glass-panel p-4 rounded-xl flex items-center gap-3 border-l-4 ${color === 'red' ? 'border-red-500' : color === 'yellow' ? 'border-yellow-500' : 'border-cyan-500'}`;
+
+            // Kuingiza
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            // Kutoa baada ya sekunde 3.5
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+
+        // Kuanzisha App mara tu inapofunguka
+        window.onload = function() {
+            renderContacts();
+            renderLogs();
+            renderDeletedItems();
+        }
+    </script>
+</body>
+</html>
